@@ -3,13 +3,10 @@ var aspect;
 var camera;
 var renderer;
 var stats;
-var controls;
 var gridHelper;
 var body = document.getElementsByTagName('body')[0];
 
 var sphere;
-
-var CONTROLS__ORBIT = 'CONTROLS__ORBIT';
 
 var CAMERA_PERSPECTIVE = 'CAMERA_PERSPECTIVE';
 
@@ -18,14 +15,8 @@ function setup(params) {
     ambientLight: true,
     camera: CAMERA_PERSPECTIVE,
     directionLight: true,
-    controls: CONTROLS__ORBIT,
     gridHelper: true,
     stats: true,
-    orbitControls: {
-      enablePan: true,
-      enableZoom: true,
-      enableRotate: true
-    }
   };
 
   if(params instanceof Object) {
@@ -48,23 +39,6 @@ function setup(params) {
     camera.position.y = 2;
   } else {
     console.warn('Camera parameter not supported yet in boilerplate');
-  }
-
-  if(!options.controls) {
-    //no camera controls
-  } else if(options.controls === CONTROLS__ORBIT) {
-    controls = new THREE.OrbitControls(camera);
-    if(!options.orbitControls.enablePan) {
-      controls.enablePan = false;
-    }
-    if(!options.orbitControls.enableZoom) {
-      controls.enableZoom = false;
-    }
-    if(!options.orbitControls.enableRotate) {
-      controls.enableRotate = false;
-    }
-  } else {
-    console.warn('Camera controls parameter not supported yet in boilerplate');
   }
 
   if(options.gridHelper) {
@@ -118,7 +92,6 @@ function render() {
   requestAnimationFrame(render);
 
   if(stats && stats.update)         stats.update();
-  if(controls && controls.update)   controls.update();
 
   renderer.render(scene, camera);
 }
