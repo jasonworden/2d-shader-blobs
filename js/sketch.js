@@ -5,6 +5,11 @@ var renderer;
 var stats;
 var uniforms;
 
+var fakeTimeMultiplier = 1.0;
+var MAX_FAKE_TIME = 16.0;
+
+var clock = new THREE.Clock();
+
 var sphere;
 
 var CAMERA_PERSPECTIVE = 'CAMERA_PERSPECTIVE';
@@ -32,7 +37,8 @@ function setup(params) {
   camera.position.z = 1;
 
   uniforms = {
-    time:       { value: 1.0 },
+    time:       { value: 0.0 },
+    fakeTime:   { value: 0.0 },
     resolution: { value: new THREE.Vector2() }
   };
 
@@ -78,7 +84,16 @@ function animate() {
 }
 
 function render() {
-  uniforms.time.value += 0.05;
+  var deltaSec = clock.getDelta();
+  uniforms.time.value += deltaSec;
+
+  uniforms.fakeTime.value += deltaSec*fakeTimeMultiplier;
+  if(uniforms.fakeTime.value > MAX_FAKE_TIME) {
+    fakeTimeMultiplier = -1.0;
+  } else if(uniforms.fakeTime.value < 0.0) {
+    fakeTimeMultiplier = 1.0;
+  }
+
   renderer.render(scene, camera);
   if(stats && stats.update)         stats.update();
 }
