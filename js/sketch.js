@@ -3,8 +3,7 @@ var aspect;
 var camera;
 var renderer;
 var stats;
-var gridHelper;
-var body = document.getElementsByTagName('body')[0];
+var uniforms;
 
 var sphere;
 
@@ -12,10 +11,6 @@ var CAMERA_PERSPECTIVE = 'CAMERA_PERSPECTIVE';
 
 function setup(params) {
   var options = {
-    ambientLight: true,
-    camera: CAMERA_PERSPECTIVE,
-    directionLight: true,
-    gridHelper: true,
     stats: true,
   };
 
@@ -29,71 +24,63 @@ function setup(params) {
     }
   }
 
-  scene = new THREE.Scene();
   aspect = window.innerWidth / window.innerHeight;
 
-  if(options.camera === CAMERA_PERSPECTIVE) {
-    //PerspectiveCamera(fov, aspect, near, far)
-    camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-    camera.position.z = -5;
-    camera.position.y = 2;
-  } else {
-    console.warn('Camera parameter not supported yet in boilerplate');
-  }
+  scene = new THREE.Scene();
 
-  if(options.gridHelper) {
-    gridHelper = new THREE.GridHelper(200, 40, 0x0000dd, 0x808080);
-    scene.add(gridHelper);
-  }
+  camera = new THREE.Camera();
+  camera.position.z = 1;
 
-  if(options.ambientLight) {
-    var light = new THREE.AmbientLight(0x404040); // soft white light
-    scene.add(light);
-  }
+  uniforms = {
+    time:       { value: 1.0 },
+    resolution: { value: new THREE.Vector2() }
+  };
 
-  if(options.directionLight) {
-    var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-    directionalLight.position.set( 1, 1, -1.1 ).normalize();
-    scene.add( directionalLight );
-  }
+  // renderer = new THREE.WebGLRenderer({antialias: true});
+  // renderer.setSize(window.innerWidth, window.innerHeight);
+  // document.body.appendChild(renderer.domElement);
 
-  if(options.stats) {
-    insertStatsGUI();
-  }
-
-  renderer = new THREE.WebGLRenderer({antialias: true});
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer = new THREE.WebGLRenderer();
+  renderer.setPixelRatio( window.devicePixelRatio );
   document.body.appendChild(renderer.domElement);
 
+  onWindowResize();
+  window.addEventListener( 'resize', onWindowResize, false );
+
+  if(options.stats)   insertStatsGUI();
+}
+
+function onWindowResize(event) {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  uniforms.resolution.value.x = renderer.domElement.width;
+  uniforms.resolution.value.y = renderer.domElement.height;
 }
 
 function fillScene() {
-  //create ground
-  var groundPlaneGeometry = new THREE.PlaneGeometry(60,40,1,1);
-  var groundPlaneMaterial = new THREE.MeshLambertMaterial({color: 0xffffff});
-  var groundPlane = new THREE.Mesh(groundPlaneGeometry,groundPlaneMaterial);
+  var geometry = new THREE.PlaneBufferGeometry( 2, 2 );
 
-  addSphere();
+  var material = new THREE.ShaderMaterial( {
+
+    uniforms: uniforms,
+    vertexShader: document.getElementById( 'vertexShader' ).textContent,
+    fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+
+  } );
+
+  var mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
 }
 
-function addSphere() {
-  var geometry = new THREE.SphereGeometry(2, 128, 128);
-  var material = new THREE.MeshPhongMaterial({
-    color: 0xff00ff,
-    specular: 0xeeeeee,
-    shininess: 25
-  });
-  sphere = new THREE.Mesh(geometry, material);
-  sphere.translateY(0.5);
-  scene.add(sphere);
+function animate() {
+  requestAnimationFrame(animate);
+  render();
 }
 
 function render() {
-  requestAnimationFrame(render);
-
-  if(stats && stats.update)         stats.update();
-
+  uniforms.time.value += 0.05;
   renderer.render(scene, camera);
+  if(stats && stats.update)         stats.update();
 }
 
 function insertStatsGUI() {
@@ -102,10 +89,10 @@ function insertStatsGUI() {
   stats.domElement.style.right = '0px'
   stats.domElement.style.left = ''
   stats.domElement.style.top = '';
-  body.appendChild(stats.dom);
+  document.body.appendChild(stats.dom);
 }
 
 setup();
 fillScene();
-render();
+animate();  //which calls render each frame
 insertStatsGUI();
